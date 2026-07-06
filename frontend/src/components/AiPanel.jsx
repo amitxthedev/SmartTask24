@@ -13,7 +13,7 @@ import { aiChat, getConversations, clearConversations } from '../api/ai'
 import { getTasks } from '../api/tasks'
 import WeatherEffects from './WeatherEffects'
 
-export default function AiPanel({ collapsed, onToggle }) {
+export default function AiPanel({ collapsed, onToggle, overlay }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -97,7 +97,9 @@ export default function AiPanel({ collapsed, onToggle }) {
   }
 
   return (
-    <div className="w-[340px] xl:w-[380px] h-full flex flex-col bg-[#0d0d10] border-l border-white/[0.04] shrink-0 overflow-hidden">
+    <>
+      {overlay && <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onToggle} />}
+      <div className={`${overlay ? 'fixed right-0 top-0 bottom-0 z-50 shadow-2xl animate-slide-left' : ''} w-[340px] xl:w-[380px] h-full flex flex-col bg-[#0d0d10] border-l border-white/[0.04] shrink-0 overflow-hidden`}>
       {/* Header */}
       <div className="relative shrink-0 border-b border-white/[0.04]">
         <div className="absolute inset-0 bg-gradient-to-b from-[#F97316]/[0.03] to-transparent pointer-events-none" />
@@ -112,20 +114,24 @@ export default function AiPanel({ collapsed, onToggle }) {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            {messages.length > 0 && (
-              <button onClick={async () => { try { await clearConversations(); setMessages([]) } catch {} }} className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/20 hover:text-white/40 transition-colors" title="Clear chat">
+            <div className="flex items-center gap-1">
+              {overlay && (
+                <button onClick={onToggle} className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/30 hover:text-white/60 transition-colors mr-1">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              )}
+              <button onClick={() => { clearConversations().catch(() => {}); setMessages([]) }} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-white/[0.06] text-white/30 hover:text-white/60 transition-colors text-[11px] font-medium">
                 <Trash2 size={12} />
+                Clear
               </button>
-            )}
-            <button onClick={onToggle} className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/20 hover:text-white/40 transition-colors" title="Collapse">
-              <ChevronRight size={14} />
-            </button>
+              <button onClick={onToggle} className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/20 hover:text-white/40 transition-colors" title="Collapse">
+                <ChevronRight size={14} />
+              </button>
+            </div>
           </div>
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
         </div>
-      </div>
-
-      {/* Messages */}
+        {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 custom-scrollbar">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-6">
@@ -196,6 +202,7 @@ export default function AiPanel({ collapsed, onToggle }) {
         </div>
       </div>
     </div>
+    </>
   )
 }
 

@@ -60,7 +60,7 @@ export default function Login() {
         shape: 'pill',
         text: 'continue_with',
         logo_alignment: 'center',
-        width: 320,
+        width: Math.min(320, window.innerWidth - 64),
       })
       return true
     }

@@ -235,7 +235,7 @@ export default function Tasks() {
                         {menuOpen === task.id && (
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(null)} />
-                            <div className="absolute right-0 top-full mt-1 w-44 bg-[#18181B] rounded-xl shadow-2xl border border-white/[0.08] py-1 z-20 animate-scale-in overflow-hidden">
+                            <div className="absolute right-0 top-full mt-1 w-44 max-w-[calc(100vw-1rem)] bg-[#18181B] rounded-xl shadow-2xl border border-white/[0.08] py-1 z-20 animate-scale-in overflow-hidden">
                               {isCompleted
                                 ? <MenuBtn icon={RotateCcw} label="Uncomplete" onClick={() => handleAction('uncomplete', task.id)} loading={actionLoading[task.id]} />
                                 : <MenuBtn icon={CheckCircle2} label="Complete" onClick={() => handleAction('complete', task.id)} loading={actionLoading[task.id]} />

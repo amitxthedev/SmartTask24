@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
@@ -9,6 +9,29 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [aiCollapsed, setAiCollapsed] = useState(false)
+  const [isSmallScreen, setIsSmallScreen] = useState(false)
+  const aiCollapsedRef = useRef(aiCollapsed)
+
+  useEffect(() => {
+    aiCollapsedRef.current = aiCollapsed
+  }, [aiCollapsed])
+
+  useEffect(() => {
+    const checkWidth = () => {
+      const small = window.innerWidth < 1280
+      setIsSmallScreen(small)
+      if (small && !aiCollapsedRef.current) setAiCollapsed(true)
+    }
+    checkWidth()
+    window.addEventListener('resize', checkWidth)
+    return () => window.removeEventListener('resize', checkWidth)
+  }, [])
+
+  const handleAiToggle = () => {
+    setAiCollapsed(!aiCollapsed)
+  }
+
+  const aiOverlay = !aiCollapsed && isSmallScreen
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#0a0a0c]">
@@ -25,7 +48,7 @@ export default function Layout() {
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
         <main className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className={`${!aiCollapsed ? 'max-w-[calc(1400px-340px)] xl:max-w-[calc(1400px-380px)]' : 'max-w-[1400px]'} mx-auto px-4 sm:px-6 lg:px-8 py-5 lg:py-6 transition-all duration-300`}>
+          <div className={`${!aiCollapsed && !isSmallScreen ? 'max-w-[calc(1400px-340px)] xl:max-w-[calc(1400px-380px)]' : 'max-w-[1400px]'} mx-auto px-4 sm:px-6 lg:px-8 py-5 lg:py-6 transition-all duration-300`}>
             <div className="animate-fade-in">
               <Outlet />
             </div>
@@ -33,8 +56,8 @@ export default function Layout() {
         </main>
       </div>
 
-      {/* AI Panel - always visible */}
-      <AiPanel collapsed={aiCollapsed} onToggle={() => setAiCollapsed(!aiCollapsed)} />
+      {/* AI Panel */}
+      <AiPanel collapsed={aiCollapsed} onToggle={handleAiToggle} overlay={aiOverlay} />
 
       {/* Location Prompt - shows once after login */}
       <LocationPrompt />

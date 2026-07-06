@@ -80,7 +80,7 @@ export default function TaskForm({ task, onSuccess, onCancel }) {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold text-white/40 mb-2 uppercase tracking-wider">Priority</label>
           <select value={form.priority} onChange={e => set('priority', e.target.value)} className="select-field">
@@ -99,7 +99,7 @@ export default function TaskForm({ task, onSuccess, onCancel }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold text-white/40 mb-2 uppercase tracking-wider">Due Date</label>
           <input

@@ -23,7 +23,7 @@ export default function Modal({ open, onClose, title, children, size = 'md' }) {
           </button>
         </div>
 
-        <div className="px-6 py-5">
+        <div className="px-4 sm:px-6 py-5">
           {children}
         </div>
       </div>

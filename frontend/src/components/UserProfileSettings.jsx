@@ -117,7 +117,7 @@ export default function UserProfileSettings({ open, onClose }) {
           </div>
 
           {/* Course + Stream */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="flex items-center gap-1.5 text-[11px] font-semibold text-white/40 mb-2 uppercase tracking-wider">
                 <BookOpen size={10} /> Course
@@ -149,7 +149,7 @@ export default function UserProfileSettings({ open, onClose }) {
           </div>
 
           {/* Semester + Year */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="flex items-center gap-1.5 text-[11px] font-semibold text-white/40 mb-2 uppercase tracking-wider">
                 <Calendar size={10} /> Semester
