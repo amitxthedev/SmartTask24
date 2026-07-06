@@ -25,6 +25,12 @@
 ### Landing Page
 ![SmartTask24 Homepage](screenshots/homepage.png)
 
+### Login Screen
+![SmartTask24 Login](screenshots/login.png)
+
+### Dashboard
+![SmartTask24 Dashboard](screenshots/dashboard.png)
+
 ---
 
 ## Features
