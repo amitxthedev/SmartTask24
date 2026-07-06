@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Plus, MoreHorizontal, CheckCircle2, RotateCcw,
   Archive, Copy, Trash2, Clock, ListTodo, Filter, Search,
-  BarChart3, ArrowUpDown, ChevronDown
+  BarChart3, ArrowUpDown, ChevronDown, Loader2
 } from 'lucide-react'
 import { getTasks, searchTasks, deleteTask, completeTask, uncompleteTask, archiveTask, restoreTask, duplicateTask } from '../api/tasks'
 import { trackCompletion } from '../utils/streak'
@@ -28,6 +28,7 @@ const statusConfig = {
 export default function Tasks() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState({})
   const [searchParams] = useSearchParams()
   const [showCreate, setShowCreate] = useState(false)
   const [menuOpen, setMenuOpen] = useState(null)
@@ -37,17 +38,15 @@ export default function Tasks() {
   const searchQuery = searchParams.get('search')
 
   const fetchTasks = () => {
-    if (searchQuery) {
-      searchTasks(searchQuery).then(r => setTasks(r.data.data)).catch(console.error)
-    } else {
-      getTasks().then(r => setTasks(r.data.data)).catch(console.error)
-    }
-    setLoading(false)
+    setLoading(true)
+    const fetcher = searchQuery ? searchTasks(searchQuery) : getTasks()
+    return fetcher.then(r => setTasks(r.data.data)).catch(console.error).finally(() => setLoading(false))
   }
 
   useEffect(() => { fetchTasks() }, [searchQuery])
 
   const handleAction = async (action, id) => {
+    setActionLoading(prev => ({ ...prev, [id]: true }))
     try {
       switch (action) {
         case 'complete': await completeTask(id); trackCompletion(); break
@@ -57,9 +56,10 @@ export default function Tasks() {
         case 'duplicate': await duplicateTask(id); break
         case 'delete': await deleteTask(id); break
       }
-      fetchTasks()
+      setMenuOpen(null)
+      await fetchTasks()
     } catch (e) { console.error(e) }
-    setMenuOpen(null)
+    setActionLoading(prev => ({ ...prev, [id]: false }))
   }
 
   const filteredTasks = tasks.filter(t => {
@@ -201,13 +201,19 @@ export default function Tasks() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleAction(isCompleted ? 'uncomplete' : 'complete', task.id) }}
+                          disabled={actionLoading[task.id]}
                           className={`shrink-0 w-[22px] h-[22px] rounded-lg border-2 flex items-center justify-center transition-all duration-200 ${
-                            isCompleted
-                              ? 'bg-[#10B981] border-[#10B981] text-white shadow-md shadow-[#10B981]/25'
-                              : 'border-white/10 hover:border-[#F97316] hover:bg-[#F97316]/10'
+                            actionLoading[task.id]
+                              ? 'border-white/10 bg-white/[0.03]'
+                              : isCompleted
+                                ? 'bg-[#10B981] border-[#10B981] text-white shadow-md shadow-[#10B981]/25'
+                                : 'border-white/10 hover:border-[#F97316] hover:bg-[#F97316]/10'
                           }`}
                         >
-                          {isCompleted && <CheckCircle2 size={13} strokeWidth={3} />}
+                          {actionLoading[task.id]
+                            ? <Loader2 size={11} className="animate-spin text-white/30" />
+                            : isCompleted && <CheckCircle2 size={13} strokeWidth={3} />
+                          }
                         </button>
                         <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-[3px] rounded-md border ${pc.text} ${pc.bg} ${pc.border}`}>
                           <span className={`w-[5px] h-[5px] rounded-full ${pc.dot}`} style={{ boxShadow: `0 0 6px ${pc.glow}` }} />
@@ -231,16 +237,16 @@ export default function Tasks() {
                             <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(null)} />
                             <div className="absolute right-0 top-full mt-1 w-44 bg-[#18181B] rounded-xl shadow-2xl border border-white/[0.08] py-1 z-20 animate-scale-in overflow-hidden">
                               {isCompleted
-                                ? <MenuBtn icon={RotateCcw} label="Uncomplete" onClick={() => handleAction('uncomplete', task.id)} />
-                                : <MenuBtn icon={CheckCircle2} label="Complete" onClick={() => handleAction('complete', task.id)} />
+                                ? <MenuBtn icon={RotateCcw} label="Uncomplete" onClick={() => handleAction('uncomplete', task.id)} loading={actionLoading[task.id]} />
+                                : <MenuBtn icon={CheckCircle2} label="Complete" onClick={() => handleAction('complete', task.id)} loading={actionLoading[task.id]} />
                               }
                               {task.status === 'ARCHIVED'
-                                ? <MenuBtn icon={RotateCcw} label="Restore" onClick={() => handleAction('restore', task.id)} />
-                                : <MenuBtn icon={Archive} label="Archive" onClick={() => handleAction('archive', task.id)} />
+                                ? <MenuBtn icon={RotateCcw} label="Restore" onClick={() => handleAction('restore', task.id)} loading={actionLoading[task.id]} />
+                                : <MenuBtn icon={Archive} label="Archive" onClick={() => handleAction('archive', task.id)} loading={actionLoading[task.id]} />
                               }
-                              <MenuBtn icon={Copy} label="Duplicate" onClick={() => handleAction('duplicate', task.id)} />
+                              <MenuBtn icon={Copy} label="Duplicate" onClick={() => handleAction('duplicate', task.id)} loading={actionLoading[task.id]} />
                               <div className="h-px bg-white/[0.04] my-1" />
-                              <MenuBtn icon={Trash2} label="Delete" onClick={() => handleAction('delete', task.id)} danger />
+                              <MenuBtn icon={Trash2} label="Delete" onClick={() => handleAction('delete', task.id)} danger loading={actionLoading[task.id]} />
                             </div>
                           </>
                         )}
@@ -312,15 +318,16 @@ export default function Tasks() {
   )
 }
 
-function MenuBtn({ icon: Icon, label, onClick, danger }) {
+function MenuBtn({ icon: Icon, label, onClick, danger, loading }) {
   return (
     <button
       onClick={onClick}
+      disabled={loading}
       className={`flex items-center gap-2.5 w-full px-3.5 py-2 text-[13px] font-medium transition-colors ${
-        danger ? 'text-red-400 hover:bg-red-500/10' : 'text-white/50 hover:bg-white/[0.04] hover:text-white/70'
+        loading ? 'opacity-40 cursor-not-allowed' : danger ? 'text-red-400 hover:bg-red-500/10' : 'text-white/50 hover:bg-white/[0.04] hover:text-white/70'
       }`}
     >
-      <Icon size={13} />
+      {loading ? <Loader2 size={13} className="animate-spin" /> : <Icon size={13} />}
       {label}
     </button>
   )

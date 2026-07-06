@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, FileText, Clock, BookOpen, Hash, Star, ArrowRight, GitBranch } from 'lucide-react'
+import { Plus, Edit2, Trash2, FileText, Clock, BookOpen, Hash, Star, ArrowRight, GitBranch, Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { getNotes, createNote, updateNote, deleteNote } from '../api/notes'
 import Modal from '../components/Modal'
@@ -8,13 +8,18 @@ import { NotesSkeleton } from '../components/Skeleton'
 export default function Notes() {
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({ title: '', content: '' })
   const [searchQuery, setSearchQuery] = useState('')
   const navigate = useNavigate()
 
-  const fetchNotes = () => getNotes().then(r => setNotes(r.data.data)).catch(console.error).finally(() => setLoading(false))
+  const fetchNotes = () => {
+    setLoading(true)
+    getNotes().then(r => setNotes(r.data.data)).catch(console.error).finally(() => setLoading(false))
+  }
 
   useEffect(() => { fetchNotes() }, [])
 
@@ -23,19 +28,23 @@ export default function Notes() {
 
   const handleSubmit = async e => {
     e.preventDefault()
+    setSubmitting(true)
     try {
       if (editing) await updateNote(editing.id, form)
       else await createNote(form)
       setShowModal(false)
-      fetchNotes()
+      await fetchNotes()
     } catch (err) { console.error(err) }
+    setSubmitting(false)
   }
 
   const handleDelete = async (id, e) => {
     e.stopPropagation()
     if (!confirm('Delete this note?')) return
+    setDeleting(id)
     await deleteNote(id)
-    fetchNotes()
+    await fetchNotes()
+    setDeleting(null)
   }
 
   const filteredNotes = notes.filter(n =>
@@ -165,8 +174,8 @@ export default function Notes() {
                     <button onClick={(e) => openEdit(n, e)} className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/25 hover:text-cyan-400 transition-colors" title="Edit">
                       <Edit2 size={11} />
                     </button>
-                    <button onClick={(e) => handleDelete(n.id, e)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/25 hover:text-red-400 transition-colors" title="Delete">
-                      <Trash2 size={11} />
+                    <button onClick={(e) => handleDelete(n.id, e)} disabled={deleting === n.id} className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/25 hover:text-red-400 transition-colors disabled:opacity-40" title="Delete">
+                      {deleting === n.id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
                     </button>
                   </div>
                 </div>
@@ -219,8 +228,11 @@ export default function Notes() {
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
-            <button type="submit" className="btn-primary">{editing ? 'Update' : 'Create'}</button>
+            <button type="button" onClick={() => setShowModal(false)} className="btn-secondary" disabled={submitting}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={submitting}>
+              {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
+              {editing ? 'Update' : 'Create'}
+            </button>
           </div>
         </form>
       </Modal>

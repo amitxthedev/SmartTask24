@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, FolderKanban, Hash, ArrowUpRight } from 'lucide-react'
+import { Plus, Edit2, Trash2, FolderKanban, Hash, ArrowUpRight, Loader2 } from 'lucide-react'
 import { getCategories, createCategory, updateCategory, deleteCategory } from '../api/categories'
 import Modal from '../components/Modal'
 import { CategoryCardSkeleton } from '../components/Skeleton'
@@ -7,11 +7,16 @@ import { CategoryCardSkeleton } from '../components/Skeleton'
 export default function Categories() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({ name: '', color: '#F97316' })
 
-  const fetch = () => getCategories().then(r => setCategories(r.data.data)).catch(console.error).finally(() => setLoading(false))
+  const fetch = () => {
+    setLoading(true)
+    getCategories().then(r => setCategories(r.data.data)).catch(console.error).finally(() => setLoading(false))
+  }
 
   useEffect(() => { fetch() }, [])
 
@@ -20,18 +25,22 @@ export default function Categories() {
 
   const handleSubmit = async e => {
     e.preventDefault()
+    setSubmitting(true)
     try {
       if (editing) await updateCategory(editing.id, form)
       else await createCategory(form)
       setShowModal(false)
-      fetch()
+      await fetch()
     } catch (err) { console.error(err) }
+    setSubmitting(false)
   }
 
   const handleDelete = async id => {
     if (!confirm('Delete this category?')) return
+    setDeleting(id)
     await deleteCategory(id)
-    fetch()
+    await fetch()
+    setDeleting(null)
   }
 
   if (loading) return <CategoryCardSkeleton />
@@ -100,8 +109,8 @@ export default function Categories() {
                     <button onClick={() => openEdit(c)} className="p-2 rounded-lg hover:bg-white/[0.06] text-white/25 hover:text-white/50 transition-colors">
                       <Edit2 size={13} />
                     </button>
-                    <button onClick={() => handleDelete(c.id)} className="p-2 rounded-lg hover:bg-red-500/10 text-white/25 hover:text-red-400 transition-colors">
-                      <Trash2 size={13} />
+                    <button onClick={() => handleDelete(c.id)} disabled={deleting === c.id} className="p-2 rounded-lg hover:bg-red-500/10 text-white/25 hover:text-red-400 transition-colors disabled:opacity-40">
+                      {deleting === c.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                     </button>
                   </div>
                 </div>
@@ -126,8 +135,11 @@ export default function Categories() {
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
-            <button type="submit" className="btn-primary">{editing ? 'Update' : 'Create'}</button>
+            <button type="button" onClick={() => setShowModal(false)} className="btn-secondary" disabled={submitting}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={submitting}>
+              {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
+              {editing ? 'Update' : 'Create'}
+            </button>
           </div>
         </form>
       </Modal>

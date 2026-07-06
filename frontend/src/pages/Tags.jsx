@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Tags as TagsIcon, Sparkles } from 'lucide-react'
+import { Plus, Edit2, Trash2, Tags as TagsIcon, Sparkles, Loader2 } from 'lucide-react'
 import { getTags, createTag, updateTag, deleteTag } from '../api/tags'
 import Modal from '../components/Modal'
 import { TagSkeleton } from '../components/Skeleton'
@@ -7,11 +7,16 @@ import { TagSkeleton } from '../components/Skeleton'
 export default function Tags() {
   const [tags, setTags] = useState([])
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({ name: '', color: '' })
 
-  const fetch = () => getTags().then(r => setTags(r.data.data)).catch(console.error).finally(() => setLoading(false))
+  const fetch = () => {
+    setLoading(true)
+    getTags().then(r => setTags(r.data.data)).catch(console.error).finally(() => setLoading(false))
+  }
 
   useEffect(() => { fetch() }, [])
 
@@ -20,18 +25,22 @@ export default function Tags() {
 
   const handleSubmit = async e => {
     e.preventDefault()
+    setSubmitting(true)
     try {
       if (editing) await updateTag(editing.id, form)
       else await createTag(form)
       setShowModal(false)
-      fetch()
+      await fetch()
     } catch (err) { console.error(err) }
+    setSubmitting(false)
   }
 
   const handleDelete = async id => {
     if (!confirm('Delete this tag?')) return
+    setDeleting(id)
     await deleteTag(id)
-    fetch()
+    await fetch()
+    setDeleting(null)
   }
 
   if (loading) return <TagSkeleton />
@@ -92,9 +101,9 @@ export default function Tags() {
                   <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/25 hover:text-white/50 transition-colors">
                     <Edit2 size={11} />
                   </button>
-                  <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/25 hover:text-red-400 transition-colors">
-                    <Trash2 size={11} />
-                  </button>
+                    <button onClick={() => handleDelete(t.id)} disabled={deleting === t.id} className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/25 hover:text-red-400 transition-colors disabled:opacity-40">
+                      {deleting === t.id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                    </button>
                 </div>
               </div>
             )
@@ -119,8 +128,11 @@ export default function Tags() {
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
-            <button type="submit" className="btn-primary">{editing ? 'Update' : 'Create'}</button>
+            <button type="button" onClick={() => setShowModal(false)} className="btn-secondary" disabled={submitting}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={submitting}>
+              {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
+              {editing ? 'Update' : 'Create'}
+            </button>
           </div>
         </form>
       </Modal>

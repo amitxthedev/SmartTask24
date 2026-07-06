@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Calendar, Clock, Trash2, CheckCircle2, RotateCcw,
-  Archive, Copy, Edit2, Tag, FolderOpen, Timer, BarChart3
+  Archive, Copy, Edit2, Tag, FolderOpen, Timer, BarChart3, Loader2
 } from 'lucide-react'
 import { getTask, deleteTask, completeTask, uncompleteTask, archiveTask, restoreTask, duplicateTask } from '../api/tasks'
 import { trackCompletion } from '../utils/streak'
@@ -22,15 +22,18 @@ export default function TaskDetail() {
   const navigate = useNavigate()
   const [task, setTask] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState(null)
   const [showEdit, setShowEdit] = useState(false)
 
   const fetchTask = () => {
+    setLoading(true)
     getTask(id).then(r => setTask(r.data.data)).catch(() => navigate('/tasks')).finally(() => setLoading(false))
   }
 
   useEffect(() => { fetchTask() }, [id])
 
   const handleAction = async (action) => {
+    setActionLoading(action)
     try {
       switch (action) {
         case 'complete': await completeTask(id); trackCompletion(); break
@@ -40,8 +43,9 @@ export default function TaskDetail() {
         case 'duplicate': await duplicateTask(id); break
         case 'delete': await deleteTask(id); navigate('/tasks'); return
       }
-      fetchTask()
+      await fetchTask()
     } catch (e) { console.error(e) }
+    setActionLoading(null)
   }
 
   if (loading) return <SkeletonCard />
@@ -171,17 +175,17 @@ export default function TaskDetail() {
 
           <div className="mt-5 pt-5 border-t border-white/[0.04] flex items-center gap-2 flex-wrap">
             {task.status === 'COMPLETED'
-              ? <ActionBtn icon={RotateCcw} label="Uncomplete" onClick={() => handleAction('uncomplete')} />
-              : <ActionBtn icon={CheckCircle2} label="Complete" onClick={() => handleAction('complete')} primary />
+              ? <ActionBtn icon={RotateCcw} label="Uncomplete" onClick={() => handleAction('uncomplete')} loading={actionLoading === 'uncomplete'} />
+              : <ActionBtn icon={CheckCircle2} label="Complete" onClick={() => handleAction('complete')} primary loading={actionLoading === 'complete'} />
             }
             {task.status === 'ARCHIVED'
-              ? <ActionBtn icon={RotateCcw} label="Restore" onClick={() => handleAction('restore')} />
-              : <ActionBtn icon={Archive} label="Archive" onClick={() => handleAction('archive')} />
+              ? <ActionBtn icon={RotateCcw} label="Restore" onClick={() => handleAction('restore')} loading={actionLoading === 'restore'} />
+              : <ActionBtn icon={Archive} label="Archive" onClick={() => handleAction('archive')} loading={actionLoading === 'archive'} />
             }
-            <ActionBtn icon={Copy} label="Duplicate" onClick={() => handleAction('duplicate')} />
+            <ActionBtn icon={Copy} label="Duplicate" onClick={() => handleAction('duplicate')} loading={actionLoading === 'duplicate'} />
             <div className="flex-1" />
-            <button onClick={() => handleAction('delete')} className="btn-danger text-[13px]">
-              <Trash2 size={13} />
+            <button onClick={() => handleAction('delete')} disabled={actionLoading === 'delete'} className="btn-danger text-[13px]">
+              {actionLoading === 'delete' ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
               Delete
             </button>
           </div>
@@ -195,10 +199,10 @@ export default function TaskDetail() {
   )
 }
 
-function ActionBtn({ icon: Icon, label, onClick, primary }) {
+function ActionBtn({ icon: Icon, label, onClick, primary, loading }) {
   return (
-    <button onClick={onClick} className={primary ? 'btn-primary text-[13px]' : 'btn-secondary text-[13px]'}>
-      <Icon size={13} />
+    <button onClick={onClick} disabled={loading} className={`${primary ? 'btn-primary text-[13px]' : 'btn-secondary text-[13px]'} ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}>
+      {loading ? <Loader2 size={13} className="animate-spin" /> : <Icon size={13} />}
       {label}
     </button>
   )

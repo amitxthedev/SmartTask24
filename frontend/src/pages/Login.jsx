@@ -13,6 +13,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const buttonRef = useRef(null)
+  const gsiInitialized = useRef(false)
 
   // Handle GitHub OAuth callback
   useEffect(() => {
@@ -46,10 +47,13 @@ export default function Login() {
 
     const renderButton = () => {
       if (!window.google?.accounts?.id || !buttonRef.current) return false
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleCredential,
-      })
+      if (!gsiInitialized.current) {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleCredential,
+        })
+        gsiInitialized.current = true
+      }
       window.google.accounts.id.renderButton(buttonRef.current, {
         theme: 'filled_black',
         size: 'large',
