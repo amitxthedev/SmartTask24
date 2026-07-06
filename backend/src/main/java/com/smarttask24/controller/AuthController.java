@@ -27,11 +27,14 @@ public class AuthController {
     @Value("${app.backend.url:http://localhost:8080}")
     private String backendUrl;
 
+    @Value("${app.google.client-id:}")
+    private String googleClientId;
+
     @GetMapping("/google/url")
     public ResponseEntity<ApiResponse> getGoogleAuthUrl() {
         String redirectUri = backendUrl + "/api/auth/google/callback";
         String authUrl = "https://accounts.google.com/o/oauth2/v2/auth" +
-                "?client_id=${GOOGLE_CLIENT_ID}" +
+                "?client_id=" + googleClientId +
                 "&redirect_uri=" + redirectUri +
                 "&response_type=code" +
                 "&scope=email%20profile" +
