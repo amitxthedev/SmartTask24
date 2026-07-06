@@ -1,0 +1,17 @@
+import api from './axios'
+
+export const getTasks = () => api.get('/tasks')
+export const getTask = id => api.get(`/tasks/${id}`)
+export const createTask = data => api.post('/tasks', data)
+export const updateTask = (id, data) => api.put(`/tasks/${id}`, data)
+export const deleteTask = id => api.delete(`/tasks/${id}`)
+export const completeTask = id => api.patch(`/tasks/${id}/complete`)
+export const uncompleteTask = id => api.patch(`/tasks/${id}/uncomplete`)
+export const archiveTask = id => api.patch(`/tasks/${id}/archive`)
+export const restoreTask = id => api.patch(`/tasks/${id}/restore`)
+export const duplicateTask = id => api.post(`/tasks/${id}/duplicate`)
+export const updateProgress = (id, progress) => api.patch(`/tasks/${id}/progress?progress=${progress}`)
+export const searchTasks = q => api.get(`/tasks/search?q=${encodeURIComponent(q)}`)
+export const getOverdueTasks = () => api.get('/tasks/overdue')
+export const getUpcomingTasks = () => api.get('/tasks/upcoming')
+export const getCalendarTasks = (start, end) => api.get(`/tasks/calendar?start=${start}&end=${end}`)
