@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID
-const GITHUB_REDIRECT_URI = import.meta.env.VITE_GITHUB_REDIRECT_URI || 'http://localhost:5173/login'
+const GITHUB_REDIRECT_URI = import.meta.env.VITE_GITHUB_REDIRECT_URI || `${window.location.origin}/login`
 
 export default function Login() {
   const { login, loginWithGithub } = useAuth()
@@ -20,7 +20,7 @@ export default function Login() {
     if (code) {
       setLoading(true)
       setError('')
-      loginWithGithub(code)
+      loginWithGithub(code, GITHUB_REDIRECT_URI)
         .then(() => navigate('/dashboard'))
         .catch((err) => {
           setError(err.response?.data?.message || 'GitHub login failed')

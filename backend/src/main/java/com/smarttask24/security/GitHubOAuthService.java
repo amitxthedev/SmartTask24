@@ -27,12 +27,12 @@ public class GitHubOAuthService {
     @Value("${app.github.client-secret:}")
     private String clientSecret;
 
-    public GitHubUser exchangeCodeForUser(String code) {
-        String accessToken = exchangeCodeForAccessToken(code);
+    public GitHubUser exchangeCodeForUser(String code, String redirectUri) {
+        String accessToken = exchangeCodeForAccessToken(code, redirectUri);
         return fetchGitHubUser(accessToken);
     }
 
-    private String exchangeCodeForAccessToken(String code) {
+    private String exchangeCodeForAccessToken(String code, String redirectUri) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.setAccept(java.util.List.of(MediaType.APPLICATION_JSON));
@@ -41,6 +41,9 @@ public class GitHubOAuthService {
         body.add("client_id", clientId);
         body.add("client_secret", clientSecret);
         body.add("code", code);
+        if (redirectUri != null && !redirectUri.isBlank()) {
+            body.add("redirect_uri", redirectUri);
+        }
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 

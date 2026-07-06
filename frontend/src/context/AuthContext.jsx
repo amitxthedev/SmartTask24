@@ -27,8 +27,8 @@ export function AuthProvider({ children }) {
     return data
   }
 
-  const loginWithGithub = async (code) => {
-    const res = await githubLogin(code)
+  const loginWithGithub = async (code, redirectUri) => {
+    const res = await githubLogin(code, redirectUri)
     const data = res.data.data
     localStorage.setItem('token', data.token)
     localStorage.setItem('user', JSON.stringify(data.user))

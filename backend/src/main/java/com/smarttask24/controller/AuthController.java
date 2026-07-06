@@ -54,10 +54,11 @@ public class AuthController {
     @PostMapping("/github")
     public ResponseEntity<ApiResponse> githubAuth(@RequestBody java.util.Map<String, String> body) {
         String code = body.get("code");
+        String redirectUri = body.get("redirectUri");
         if (code == null || code.isBlank()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Missing authorization code"));
         }
-        GitHubOAuthService.GitHubUser gitHubUser = gitHubOAuthService.exchangeCodeForUser(code);
+        GitHubOAuthService.GitHubUser gitHubUser = gitHubOAuthService.exchangeCodeForUser(code, redirectUri);
         AuthResponse response = authService.handleGoogleAuth(
                 gitHubUser.email(), gitHubUser.name(), gitHubUser.avatar());
         return ResponseEntity.ok(ApiResponse.success("GitHub auth successful", response));
