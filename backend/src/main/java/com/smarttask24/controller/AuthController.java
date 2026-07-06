@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,9 +24,12 @@ public class AuthController {
     private final GoogleTokenVerifier googleTokenVerifier;
     private final GitHubOAuthService gitHubOAuthService;
 
+    @Value("${app.backend.url:http://localhost:8080}")
+    private String backendUrl;
+
     @GetMapping("/google/url")
     public ResponseEntity<ApiResponse> getGoogleAuthUrl() {
-        String redirectUri = "http://localhost:8080/api/auth/google/callback";
+        String redirectUri = backendUrl + "/api/auth/google/callback";
         String authUrl = "https://accounts.google.com/o/oauth2/v2/auth" +
                 "?client_id=${GOOGLE_CLIENT_ID}" +
                 "&redirect_uri=" + redirectUri +
